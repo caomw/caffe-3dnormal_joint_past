@@ -73,8 +73,16 @@ bool LocReadImageToDatum(const vector<string>& files, const int height, const in
 	for (int c = 0; c < 3; ++c) {
 		for (int h = 0; h < cv_img.rows; ++h) {
 		  for (int w = 0; w < cv_img.cols; ++w) {
-			datum->add_float_data(static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
-		  }
+      if(filenum == 1)
+      {
+			   datum->add_float_data(static_cast<uint8_t>(cv_img.at<cv::Vec3b>(h, w)[c]));
+      }
+      else
+      {
+         datum->add_float_data(static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
+      }
+		  
+      }
 		}
 	}
 
@@ -192,7 +200,7 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 							datum_element = datum.float_data(data_index);
 							//datum_element =	static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
 						//top_data[top_index] = (datum_element - mean[data_index]) * scale;
-						top_data[top_index] = ( (uchar)(datum_element) - mean[mean_index]) * scale;
+						top_data[top_index] = ( (datum_element) - mean[mean_index]) * scale;
 
 //            img.at<cv::Vec3b>(h, w)[c] = (uchar)(datum_element * scale);
             

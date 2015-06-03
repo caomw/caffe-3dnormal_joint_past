@@ -165,9 +165,9 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 	for(int gh = 0; gh < hnum; gh ++ )
 		for(int gw = 0; gw < wnum; gw ++)
 		{
-      /*char ss1[1010];
+      char ss1[1010];
       sprintf(ss1,"/home/dragon123/cnncode/showimg/%d.jpg",item_id);
-      Mat img(Size(55,55),CV_8UC3);*/
+      Mat img(Size(55,55),CV_8UC3);
 
 			int midh = gh * slide_stride + slide_stride / 2;
 			int midw = gw * slide_stride + slide_stride / 2;
@@ -194,13 +194,13 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 						//top_data[top_index] = (datum_element - mean[data_index]) * scale;
 						top_data[top_index] = (datum_element - mean[mean_index]) * scale;
 
-            //img.at<cv::Vec3b>(h, w)[c] = (uchar)(datum_element * scale);
+            img.at<cv::Vec3b>(h, w)[c] = (uchar)(datum_element * scale);
             
 					}
 				}
 			}
 
-      //imwrite(ss1,img);
+      imwrite(ss1,img);
 
 			//top_labelreinterpret_cast[item_id] = datum.label();
 			for (int label_i = 0; label_i < datum.label_size(); label_i++)

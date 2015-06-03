@@ -179,12 +179,19 @@ int main(int argc, char** argv)
 					fscanf(file,"%d",&lbl);
 				}*/
 			fprintf(resultfile, "%s ", fname);
-			int len = LABEL_SIZE * LABEL_LEN;
-			for(int j = 0; j < len; j ++)
+			int channels = bboxs->channels();
+			int height   = bboxs->height();
+			int width    = bboxs->width();
+			for(int c = 0; c < channels; c ++)
 			{
-				fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, j, 0, 0)) );
+				for(int h = 0; h < height; h ++)
+					for(int w = 0; w < width; w ++)
+						{
+							// output_mat[c * HEIGHT * WIDTH + (off_w + w) * HEIGHT + off_h + h ] = (float)(bboxs->data_at(i, c, h, w));
+							fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, h, w)) );
+						}
+				fprintf(resultfile, "\n");
 			}
-			fprintf(resultfile, "\n");
 		}
 	}
 

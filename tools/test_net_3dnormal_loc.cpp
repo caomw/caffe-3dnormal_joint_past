@@ -106,9 +106,9 @@ char buf[101000];
 int main(int argc, char** argv)
 {
 
-	cudaSetDevice(0);
+	//cudaSetDevice(0);
 	Caffe::set_phase(Caffe::TEST);
-	Caffe::SetDevice(3);
+	//Caffe::SetDevice(3);
 	//Caffe::set_mode(Caffe::CPU);
 
 	if (argc == 8 && strcmp(argv[7], "CPU") == 0) {
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 		Caffe::set_mode(Caffe::GPU);
 	}
 
-//	Caffe::set_mode(Caffe::CPU);
+	Caffe::set_mode(Caffe::CPU);
 	NetParameter test_net_param;
 	ReadProtoFromTextFile(argv[1], &test_net_param);
 	Net<float> caffe_test_net(test_net_param);

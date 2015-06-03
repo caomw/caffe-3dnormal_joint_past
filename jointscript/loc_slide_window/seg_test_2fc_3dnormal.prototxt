@@ -11,6 +11,7 @@ layers {
     batch_size: 300
     crop_size: 55
     mirror: false
+    shuffle: false
     source_num : 1
     slide_stride: 13
     new_height: 195

@@ -194,11 +194,18 @@ else
 			LIBRARIES += cblas atlas
 		endif
 	else ifeq ($(OSX), 1)
-		# OS X packages atlas as the vecLib framework
-		BLAS_INCLUDE ?= /System/Library/Frameworks/vecLib.framework/Versions/Current/Headers/
-		LIBRARIES += cblas
-		LDFLAGS += -framework vecLib
-	endif
+	        # OS X packages atlas as the vecLib framework
+                LIBRARIES += cblas
+                # 10.10 has accelerate while 10.9 has veclib
+                XCODE_CLT_VER := $(shell pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -o 'version: 6')
+                ifneq (,$(findstring version: 6,$(XCODE_CLT_VER)))
+                        BLAS_INCLUDE ?= /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
+                        LDFLAGS += -framework Accelerate
+                else
+                        BLAS_INCLUDE ?= /System/Library/Frameworks/vecLib.framework/Versions/Current/Headers/
+                        LDFLAGS += -framework vecLib
+                endif
+        endif
 endif
 INCLUDE_DIRS += $(BLAS_INCLUDE)
 LIBRARY_DIRS += $(BLAS_LIB)

@@ -16,9 +16,18 @@
 #include "caffe/util/rng.hpp"
 #include "caffe/vision_layers.hpp"
 
+
+#include <cv.h>
+#include <highgui.h>
+#include <cxcore.h>
+
+
 using std::iterator;
 using std::string;
 using std::pair;
+
+
+using namespace cv;
 
 namespace caffe {
 
@@ -50,7 +59,8 @@ bool LocReadImageToDatum(const vector<string>& files, const int height, const in
     return false;
   }
 
-  int filenum = files.size();
+  // the last file is label
+  int filenum = files.size() - 1;
 
 
 	datum->set_channels(3 * filenum);
@@ -63,12 +73,20 @@ bool LocReadImageToDatum(const vector<string>& files, const int height, const in
 	for (int c = 0; c < 3; ++c) {
 		for (int h = 0; h < cv_img.rows; ++h) {
 		  for (int w = 0; w < cv_img.cols; ++w) {
-			datum->add_float_data(static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
-		  }
+      if(filenum == 1)
+      {
+			   datum->add_float_data(static_cast<uint8_t>(cv_img.at<cv::Vec3b>(h, w)[c]));
+      }
+      else
+      {
+         datum->add_float_data(static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
+      }
+		  
+      }
 		}
 	}
 
-	for(int i = 1; i < filenum - 1; i ++)
+	for(int i = 1; i < filenum; i ++)
 	{
 		string filename2 = files[i];
 		FILE *pFile = fopen(filename2.c_str(), "rb");
@@ -78,9 +96,9 @@ bool LocReadImageToDatum(const vector<string>& files, const int height, const in
 			{
 			  for (int w = 0; w < cv_img.cols; ++w)
 			  {
-				float tnum;
-				fread(&tnum, sizeof(float), 1, pFile);
-				datum->add_float_data(tnum );
+				  float tnum;
+				  fread(&tnum, sizeof(float), 1, pFile);
+				  datum->add_float_data(tnum);
 		//		imgIn.at<cv::Vec3b>(h, w)[2 - c] = (uchar)(tnum);
 			  }
 			}
@@ -89,7 +107,7 @@ bool LocReadImageToDatum(const vector<string>& files, const int height, const in
 	}
 
   int num, cnt = 0;
-  string labelfile = files[filenum - 1];
+  string labelfile = files[filenum];
   FILE *fid = fopen(labelfile.c_str(), "r");
   while(fscanf(fid, "%d", &num) > 0)
   {
@@ -132,7 +150,7 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 	const int channels = layer->datum_channels_;
 	const int height = layer->datum_height_;
 	const int width = layer->datum_width_;
-	const int size = layer->datum_size_;
+	//const int size = layer->datum_size_;
 	const int lines_size = layer->lines_.size();
 	const Dtype* mean = layer->data_mean_.cpu_data();
 
@@ -144,7 +162,7 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 		LOG(ERROR) << "Could not fretch file " << filename;
 		return reinterpret_cast<void*>(NULL);
 	}
-	const string& data = datum.data();
+	//const string& data = datum.data();
 	const int slide_stride = image_loc_data_param.slide_stride();
 
 
@@ -155,10 +173,14 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 	for(int gh = 0; gh < hnum; gh ++ )
 		for(int gw = 0; gw < wnum; gw ++)
 		{
+  /*    char ss1[1010];
+      sprintf(ss1,"/home/dragon123/cnncode/showimg/%04d.jpg",item_id);
+      Mat img(Size(55,55),CV_8UC3);*/
+
 			int midh = gh * slide_stride + slide_stride / 2;
 			int midw = gw * slide_stride + slide_stride / 2;
 			int h_off = midh - crop_size / 2;
-			int w_off = midh - crop_size / 2;
+			int w_off = midw - crop_size / 2;
 
 			// Normal copy
 			for (int c = 0; c < channels; ++c)
@@ -171,16 +193,25 @@ void* ImageLocDataLayerPrefetch(void* layer_pointer)
 								* crop_size + h) * crop_size + w;
 						int data_index = (c * height + h + h_off) * width
 								+ w + w_off;
+						int mean_index = ( c * crop_size + h) * crop_size + w;
 
 						Dtype datum_element = 0;
-						if(h + h_off >=0 && h + h_off < new_height && w + w_off >=0 && w + w_off < new_width)
-							datum_element =	static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
-						top_data[top_index] = (datum_element
-								- mean[data_index]) * scale;
+						if(h + h_off >=0 && h + h_off < height && w + w_off >=0 && w + w_off < width)
+							datum_element = datum.float_data(data_index);
+							//datum_element =	static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+						//top_data[top_index] = (datum_element - mean[data_index]) * scale;
+						top_data[top_index] = ( (datum_element) - mean[mean_index]) * scale;
+
+//            img.at<cv::Vec3b>(h, w)[c] = (uchar)(datum_element * scale);
+            
 					}
 				}
 			}
+
+//      imwrite(ss1,img);
+
 			//top_labelreinterpret_cast[item_id] = datum.label();
+      CHECK(datum.label_size() == 1);
 			for (int label_i = 0; label_i < datum.label_size(); label_i++)
 			{
 				top_label[item_id * datum.label_size() + label_i] = datum.label(label_i);
@@ -215,7 +246,7 @@ void ImageLocDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(bottom.size(), 0) << "Input Layer takes no input blobs.";
   CHECK_EQ(top->size(), 2) << "Input Layer takes two blobs as output.";
   const int new_height  = this->layer_param_.image_loc_data_param().new_height();
-  const int new_width  = this->layer_param_.image_loc_data_param().new_height();
+  const int new_width  = this->layer_param_.image_loc_data_param().new_width();
 
   const int slide_stride = this->layer_param_.image_loc_data_param().slide_stride();
   const int source_num = this->layer_param_.image_loc_data_param().source_num();

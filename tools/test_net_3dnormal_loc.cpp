@@ -106,9 +106,9 @@ char buf[101000];
 int main(int argc, char** argv)
 {
 
-	cudaSetDevice(0);
+	//cudaSetDevice(0);
 	Caffe::set_phase(Caffe::TEST);
-	Caffe::SetDevice(3);
+	//Caffe::SetDevice(3);
 	//Caffe::set_mode(Caffe::CPU);
 
 	if (argc == 8 && strcmp(argv[7], "CPU") == 0) {
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 		Caffe::set_mode(Caffe::GPU);
 	}
 
-//	Caffe::set_mode(Caffe::CPU);
+	Caffe::set_mode(Caffe::CPU);
 	NetParameter test_net_param;
 	ReadProtoFromTextFile(argv[1], &test_net_param);
 	Net<float> caffe_test_net(test_net_param);
@@ -128,8 +128,8 @@ int main(int argc, char** argv)
 	caffe_test_net.CopyTrainedLayersFrom(trained_net_param);
 
 	vector<shared_ptr<Layer<float> > > layers = caffe_test_net.layers();
-	const DataLayer<float> *datalayer = dynamic_cast<const DataLayer<float>* >(layers[0].get());
-	CHECK(datalayer);
+	//const DataLayer<float> *datalayer = dynamic_cast<const DataLayer<float>* >(layers[0].get());
+	//CHECK(datalayer);
 
 	string labelFile(argv[3]);
 	int data_counts = 0;
@@ -179,12 +179,19 @@ int main(int argc, char** argv)
 					fscanf(file,"%d",&lbl);
 				}*/
 			fprintf(resultfile, "%s ", fname);
-			int len = LABEL_SIZE * LABEL_LEN;
-			for(int j = 0; j < len; j ++)
+			int channels = bboxs->channels();
+			int height   = bboxs->height();
+			int width    = bboxs->width();
+			for(int c = 0; c < channels; c ++)
 			{
-				fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, j, 0, 0)) );
+				for(int h = 0; h < height; h ++)
+					for(int w = 0; w < width; w ++)
+						{
+							// output_mat[c * HEIGHT * WIDTH + (off_w + w) * HEIGHT + off_h + h ] = (float)(bboxs->data_at(i, c, h, w));
+							fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, h, w)) );
+						}
+				fprintf(resultfile, "\n");
 			}
-			fprintf(resultfile, "\n");
 		}
 	}
 

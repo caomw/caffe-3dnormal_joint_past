@@ -38,6 +38,10 @@ using namespace cv;
 using namespace caffe;
 using std::vector;
 
+#define HEIGHT 195
+#define WIDTH  260
+#define STRIDE 13
+
 
 int CreateDir(const char *sPathName, int beg) {
 	char DirName[256];
@@ -77,6 +81,8 @@ int main(int argc, char** argv)
 		Caffe::set_mode(Caffe::GPU);
 	}
 
+	Caffe::set_mode(Caffe::CPU);
+//	Caffe::SetDevice(0);
 	NetParameter test_net_param;
 	ReadProtoFromTextFile(argv[1], &test_net_param);
 	Net<float> caffe_test_net(test_net_param);
@@ -116,6 +122,8 @@ int main(int argc, char** argv)
 	string resulttxt = rootfolder + "3dNormalResult.txt";
 	FILE * resultfile = fopen(resulttxt.c_str(), "w");
 
+	float * output_mat = new float[HEIGHT * WIDTH * 3];
+
 	for (int batch_id = 0; batch_id < batchCount; ++batch_id)
 	{
 		LOG(INFO)<< "processing batch :" << batch_id+1 << "/" << batchCount <<"...";
@@ -129,18 +137,17 @@ int main(int argc, char** argv)
 		char fname[1010];
 		char fname2[1010];
 		fscanf(file, "%s", fname);
-		for(int i = 0; i < 0; i ++ ) fscanf(file, "%s", fname2);
+		for(int i = 0; i < 1; i ++ ) fscanf(file, "%s", fname2);
 		fprintf(resultfile, "%s ", fname);
 
 		int channels = bboxs->channels();
 		int height   = bboxs->height();
 		int width    = bboxs->width();
-		int hnum = 15;
-		int wnum = 20;
-		int stride = 13;
-
+		int hnum = HEIGHT / STRIDE;
+		int wnum = WIDTH / STRIDE;
+		int stride = STRIDE;
+		for(int i = 0; i < bsize; i++)
 		for(int c = 0; c < channels; c ++)
-		for (int i = 0; i < bsize; i++)
 		{
 			int hi = i / wnum;
 			int wi = i % wnum;
@@ -149,11 +156,19 @@ int main(int argc, char** argv)
 			for(int h = 0; h < height; h ++)
 				for(int w = 0; w < width; w ++)
 					{
-						fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, off_h + h, off_w + w)) );
+						// output_mat[c * HEIGHT * WIDTH + (off_w + w) * HEIGHT + off_h + h ] = (float)(bboxs->data_at(i, c, h, w));
+						fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, h, w)) );
 					}
 			fprintf(resultfile, "\n");
 		}
+		//for(int i = 0; i < HEIGHT * WIDTH * 3; i ++) 
+		//	fprintf(resultfile, "%f ", output_mat[i] );
+		//fprintf(resultfile, "\n");
+
+
 	}
+
+	delete output_mat;
 
 	fclose(resultfile);
 	fclose(file);

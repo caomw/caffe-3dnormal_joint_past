@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	for (int batch_id = 0; batch_id < batchCount; ++batch_id)
 	{
 		LOG(INFO)<< "processing batch :" << batch_id+1 << "/" << batchCount <<"...";
-
+		const vector<Blob<float>*>& result = caffe_test_net.Forward(dummy_blob_input_vec);
 		Blob<float>* bboxs = (*(caffe_test_net.top_vecs().rbegin()))[0];
 		int bsize = bboxs->num();
 

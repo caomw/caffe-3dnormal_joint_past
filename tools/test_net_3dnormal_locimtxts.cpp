@@ -1,12 +1,3 @@
-// 输出分割的结果
-
-/*#include <cuda_runtime.h>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/highgui/highgui_c.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/opencv.hpp>*/
 
 #include <cv.h>
 #include <highgui.h>
@@ -65,6 +56,25 @@ int CreateDir(const char *sPathName, int beg) {
 	return 0;
 }
 
+string parsename(char* filename)
+{
+	int len = strlen(filename);
+	int id = 0;
+	for (int i = len - 1; i >= 0; i --)
+	{
+		if (filename[i] == '/')
+		{
+			id = i + 1;
+			break;
+		}
+	}
+	string res = "";
+	for (int i = id; i < len - 3; i ++)
+		res = res + filename[i];
+	res = res + "txt";
+	return res;
+}
+
 char buf[101000];
 int main(int argc, char** argv)
 {
@@ -119,8 +129,8 @@ int main(int argc, char** argv)
     int c2 = c1->num();
 	int batchCount = data_counts;
 
-	string resulttxt = rootfolder + "3dNormalResult.txt";
-	FILE * resultfile = fopen(resulttxt.c_str(), "w");
+	//string resulttxt = rootfolder + "3dNormalResult.txt";
+	//FILE * resultfile = fopen(resulttxt.c_str(), "w");
 
 	float * output_mat = new float[HEIGHT * WIDTH * 3];
 
@@ -138,7 +148,13 @@ int main(int argc, char** argv)
 		char fname2[1010];
 		fscanf(file, "%s", fname);
 		for(int i = 0; i < 1; i ++ ) fscanf(file, "%s", fname2);
-		fprintf(resultfile, "%s ", fname);
+
+		string filename = parsename(fname2);
+		filename = rootfolder + "/" + filename;
+		FILE * resultfile = fopen(filename.c_str(), "w");
+
+
+		//fprintf(resultfile, "%s ", fname);
 
 		int channels = bboxs->channels();
 		int height   = bboxs->height();
@@ -157,20 +173,20 @@ int main(int argc, char** argv)
 				for(int w = 0; w < width; w ++)
 					{
 						output_mat[c * HEIGHT * WIDTH + (off_w + w) * HEIGHT + off_h + h ] = (float)(bboxs->data_at(i, c, h, w));
-						//fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, h, w)) );
 					}
-			//fprintf(resultfile, "\n");
 		}
 		for(int i = 0; i < HEIGHT * WIDTH * 3; i ++)
 			fprintf(resultfile, "%f ", output_mat[i] );
-		fprintf(resultfile, "\n");
+		//fprintf(resultfile, "\n");
+
+		fclose(resultfile);
 
 
 	}
 
 	delete output_mat;
 
-	fclose(resultfile);
+	//fclose(resultfile);
 	fclose(file);
 
 

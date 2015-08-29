@@ -90,7 +90,8 @@ bool LocReadImageToDatum(const vector<string>& files, const int height,
 	for (int i = 1; i < filenum; i++)
 	{
 		string filename2 = files[i];
-		FILE *pFile = fopen(filename2.c_str(), "rb");
+		//FILE *pFile = fopen(filename2.c_str(), "rb");
+		FILE *pFile = fopen(filename2.c_str(), "r");
 		for (int c = 0; c < 3; ++c)
 		{
 			for (int h = 0; h < cv_img.rows; ++h)
@@ -98,9 +99,10 @@ bool LocReadImageToDatum(const vector<string>& files, const int height,
 				for (int w = 0; w < cv_img.cols; ++w)
 				{
 					float tnum;
-					fread(&tnum, sizeof(float), 1, pFile);
+					//fread(&tnum, sizeof(float), 1, pFile);
+					fscanf(pFile, "%f", tnum);
+					tnum = tnum * 128 + 128;
 					datum->add_float_data(tnum);
-					//		imgIn.at<cv::Vec3b>(h, w)[2 - c] = (uchar)(tnum);
 				}
 			}
 		}

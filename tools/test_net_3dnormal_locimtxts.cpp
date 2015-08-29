@@ -32,6 +32,7 @@ using std::vector;
 #define HEIGHT 195
 #define WIDTH  260
 #define STRIDE 13
+#define FILENUM 3
 
 
 int CreateDir(const char *sPathName, int beg) {
@@ -147,7 +148,7 @@ int main(int argc, char** argv)
 		char fname[1010];
 		char fname2[1010];
 		fscanf(file, "%s", fname);
-		for(int i = 0; i < 1; i ++ ) fscanf(file, "%s", fname2);
+		for(int i = 0; i < FILENUM; i ++ ) fscanf(file, "%s", fname2);
 
 		string filename = parsename(fname);
 		filename = rootfolder + "/" + filename;

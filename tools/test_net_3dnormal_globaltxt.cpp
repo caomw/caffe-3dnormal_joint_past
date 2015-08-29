@@ -29,11 +29,6 @@ using namespace cv;
 using namespace caffe;
 using std::vector;
 
-#define HEIGHT 195
-#define WIDTH  260
-#define STRIDE 13
-
-
 int CreateDir(const char *sPathName, int beg) {
 	char DirName[256];
 	strcpy(DirName, sPathName);
@@ -55,7 +50,6 @@ int CreateDir(const char *sPathName, int beg) {
 
 	return 0;
 }
-
 string parsename(char* filename)
 {
 	int len = strlen(filename);
@@ -75,14 +69,14 @@ string parsename(char* filename)
 	return res;
 }
 
+
 char buf[101000];
 int main(int argc, char** argv)
 {
 
 	cudaSetDevice(0);
 	Caffe::set_phase(Caffe::TEST);
-	//Caffe::set_mode(Caffe::CPU);
-
+	//Caffe::SetDevice(2);
 	if (argc == 8 && strcmp(argv[7], "CPU") == 0) {
 		LOG(ERROR) << "Using CPU";
 		Caffe::set_mode(Caffe::CPU);
@@ -91,8 +85,10 @@ int main(int argc, char** argv)
 		Caffe::set_mode(Caffe::GPU);
 	}
 
-	Caffe::set_mode(Caffe::CPU);//
-//	Caffe::SetDevice(0);
+	Caffe::set_mode(Caffe::GPU);
+	Caffe::SetDevice(0);
+	//Caffe::set_mode(Caffe::CPU);
+
 	NetParameter test_net_param;
 	ReadProtoFromTextFile(argv[1], &test_net_param);
 	Net<float> caffe_test_net(test_net_param);
@@ -100,9 +96,6 @@ int main(int argc, char** argv)
 	ReadProtoFromBinaryFile(argv[2], &trained_net_param);
 	caffe_test_net.CopyTrainedLayersFrom(trained_net_param);
 
-	//vector<shared_ptr<Layer<float> > > layers = caffe_test_net.layers();
-	//const DataLayer<float> *datalayer = dynamic_cast<const DataLayer<float>* >(layers[0].get());
-	//CHECK(datalayer);
 
 	string labelFile(argv[3]);
 	int data_counts = 0;
@@ -127,12 +120,10 @@ int main(int argc, char** argv)
 
 	Blob<float>* c1 = (*(caffe_test_net.bottom_vecs().rbegin()))[0];
     int c2 = c1->num();
-	int batchCount = data_counts;
+	int batchCount = std::ceil(data_counts / (floor)(c2));//(test_net_param.layers(0).layer().batchsize()));//                (test_net_param.layers(0).layer().batchsize() ));
 
 	//string resulttxt = rootfolder + "3dNormalResult.txt";
 	//FILE * resultfile = fopen(resulttxt.c_str(), "w");
-
-	float * output_mat = new float[HEIGHT * WIDTH * 3];
 
 	for (int batch_id = 0; batch_id < batchCount; ++batch_id)
 	{
@@ -143,52 +134,34 @@ int main(int argc, char** argv)
 		int bsize = bboxs->num();
 
 		const Blob<float>* labels = (*(caffe_test_net.bottom_vecs().rbegin()))[1];
-
-		char fname[1010];
-		char fname2[1010];
-		fscanf(file, "%s", fname);
-		for(int i = 0; i < 1; i ++ ) fscanf(file, "%s", fname2);
-
-		string filename = parsename(fname);
-		filename = rootfolder + "/" + filename;
-		printf("%s\n", filename.c_str());
-		FILE * resultfile = fopen(filename.c_str(), "w");
-
-
-		//fprintf(resultfile, "%s ", fname);
-
-		int channels = bboxs->channels();
-		int height   = bboxs->height();
-		int width    = bboxs->width();
-		int hnum = HEIGHT / STRIDE;
-		int wnum = WIDTH / STRIDE;
-		int stride = STRIDE;
-		for(int i = 0; i < bsize; i++)
-		for(int c = 0; c < channels; c ++)
+		for (int i = 0; i < bsize && counts < data_counts; i++, counts++)
 		{
-			int hi = i / wnum;
-			int wi = i % wnum;
-			int off_h = hi * stride;
-			int off_w = wi * stride;
-			for(int h = 0; h < height; h ++)
-				for(int w = 0; w < width; w ++)
+			char fname[1010];
+			int lbl;
+			fscanf(file, "%s", fname);
+			fscanf(file, "%d", &lbl);
+			string filename = parsename(fname);
+			filename = rootfolder + "/" + filename;
+			printf("%s\n", filename.c_str());
+			FILE * resultfile = fopen(filename.c_str(), "w");
+
+			int channels = bboxs->channels();
+			int height   = bboxs->height();
+			int width    = bboxs->width();
+			int len = channels * height * width;
+
+			for (int c = 0; c < channels; c ++)
+				for(int h = 0; h < height; h ++)
+					for(int w = 0; w < width; w ++)
 					{
-						//output_mat[c * HEIGHT * WIDTH + (off_w + w) * HEIGHT + off_h + h ] = (float)(bboxs->data_at(i, c, h, w));
-						output_mat[c * HEIGHT * WIDTH + (off_h + h) * WIDTH + off_w + w ] = (float)(bboxs->data_at(i, c, h, w));
+						fprintf(resultfile, "%f ", (float)(bboxs->data_at(i, c, h, w)) );
 					}
+			//fprintf(resultfile, "\n");
+
+			fclose(resultfile);
 		}
-		for(int i = 0; i < HEIGHT * WIDTH * 3; i ++)
-			fprintf(resultfile, "%f ", output_mat[i] );
-		//fprintf(resultfile, "\n");
-
-		fclose(resultfile);
-
-
 	}
 
-	delete output_mat;
-
-	//fclose(resultfile);
 	fclose(file);
 
 

@@ -149,8 +149,9 @@ int main(int argc, char** argv)
 		fscanf(file, "%s", fname);
 		for(int i = 0; i < 1; i ++ ) fscanf(file, "%s", fname2);
 
-		string filename = parsename(fname2);
+		string filename = parsename(fname);
 		filename = rootfolder + "/" + filename;
+		printf("%s\n", filename.c_str());
 		FILE * resultfile = fopen(filename.c_str(), "w");
 
 

@@ -101,7 +101,7 @@ bool LocReadImageToDatum(const vector<string>& files, const int height,
 					float tnum;
 					//fread(&tnum, sizeof(float), 1, pFile);
 					fscanf(pFile, "%f", &tnum);
-					tnum = tnum * 128 + 128;
+					//tnum = tnum * 128 + 128;
 					datum->add_float_data(tnum);
 				}
 			}

@@ -5,7 +5,7 @@ layers {
   top: "data_full"
   top: "label_3dnorm"
   image_data_param {
-    source: "/nfs/hn46/xiaolonw/cnncode/viewer/testLabels_full.txt"
+    source: "/nfs/hn46/xiaolonw/cnncode/viewer/testLabels_single.txt"
     mean_file: "/nfs/ladoga_no_backups/users/xiaolonw/3dnormal_fcn/means/3d_mean_full.binaryproto"
     batch_size: 5
     new_height: 195
